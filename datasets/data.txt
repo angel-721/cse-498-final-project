@@ -1,0 +1,2 @@
+download and unzip: https://www.kaggle.com/datasets/andy8744/playing-cards-object-detection-dataset?resource=download
+make a new dir called cards and place the unzipped data in it in this dir
