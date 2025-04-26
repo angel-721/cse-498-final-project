@@ -10,3 +10,5 @@ training
 https://docs.ultralytics.com/models/yolo11/
 https://docs.ultralytics.com/modes/train/#key-features-of-train-mode
 
+Run scripts from home dir, not src
+
