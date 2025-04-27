@@ -1,10 +1,9 @@
 import torch
 import os
 from ultralytics import YOLO
-import cv2
-import matplotlib.pyplot as plt
-import numpy as np
+import time
 
+EPOCHS = 60
 
 def setup_dataset_path():
     """
@@ -13,10 +12,13 @@ def setup_dataset_path():
     Returns:
         str: The path to the dataset YAML file.
     """
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    dataset = current_dir + "\\datasets\\cards\\data.yaml"
-    return dataset
 
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # go up one directory since the script is in the src, not in the root
+    current_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+
+    return current_dir + "\\datasets\\cards\\data.yaml"
 
 if __name__ == '__main__':
     # Check if GPU is available and set device accordingly
@@ -31,7 +33,20 @@ if __name__ == '__main__':
 
     dataset = setup_dataset_path()
 
+    working_dir = os.path.dirname(os.path.abspath(__file__))
+
+    print(f"Working directory: {working_dir}")
+    print(f"Dataset path: {dataset}")
+
     # Load a COCO-pretrained YOLOv11n model
     model = YOLO("./models/yolo11n.pt")
 
-    results = model.train(data=dataset, epochs=20, imgsz=640, device=device)
+    # Train the model
+    print("Starting training...")
+    start_time = time.time()
+    results = model.train(data=dataset, epochs=EPOCHS, imgsz=640, device=device)
+    end_time = time.time()
+    print(f"Training completed in {end_time - start_time:.2f} seconds.")
+
+    # Save the model
+    model.save(f"./models/yolo11n-cards-{EPOCHS}-epochs.pt")

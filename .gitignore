@@ -175,5 +175,11 @@ cython_debug/
 
 # CV stuff
 *.jpg
-*png
+*.rf*
+*.txt
+*.yaml
+*.png
 *.pt
+./datasets/*
+./models/*
+*.cache
