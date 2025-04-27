@@ -61,23 +61,45 @@ def draw_bounding_box(results, frame):
     return frame
 
 
-while True:
-    ret, frame = cam.read()
+def webcam_main():
+    while True:
+        ret, frame = cam.read()
+        # Resize the frame to the input size of the model
+        resized_frame = cv2.resize(frame, (640, 640))
 
-    # Resize the frame to the input size of the model
-    resized_frame = cv2.resize(frame, (640, 640))
+        # Perform inference
+        results = model.predict(source=resized_frame, conf=0.5, iou=0.5)
+        frame = draw_bounding_box(results, frame)
+
+        # Display the captured frame
+        cv2.imshow('Camera', frame)
+
+        # Press 'q' to exit the loop
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    cam.release()
+    cv2.destroyAllWindows()
+
+def picture_main(image_path):
+    # Read the image
+    image = cv2.imread(image_path)
+    # Resize the image to the input size of the model
+    resized_image = cv2.resize(image, (640, 640))
 
     # Perform inference
-    results = model.predict(source=resized_frame, conf=0.5, iou=0.5)
+    results = model.predict(source=resized_image, conf=0.5, iou=0.5)
 
-    frame = draw_bounding_box(results, frame)
+    # Draw bounding boxes on the original image
+    resized_image = draw_bounding_box(results, resized_image)
 
-    # Display the captured frame
-    cv2.imshow('Camera', frame)
+    # Display the image with bounding boxes
+    cv2.imshow('Image', resized_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-    # Press 'q' to exit the loop
-    if cv2.waitKey(1) == ord('q'):
-        break
 
-cam.release()
-cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    # webcam_main()
+    picture_main("./src/test.jpg")
