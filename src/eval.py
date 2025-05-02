@@ -1,6 +1,5 @@
 from ultralytics import YOLO
 from train import setup_dataset_path
-import matplotlib.pyplot as plt
 
 
 def main():
@@ -15,9 +14,11 @@ def main():
 
     # Print the metrics
     # print(f"Results: {metrics}")
-    print("Class indices with average precision:", results.ap_class_index)
-    print("Average precision for all classes:", results.box.all_ap)
-    print("Mean average precision at IoU=0.50:", results.box.map50)
+    # print("Class indices with average precision:", results.ap_class_index)
+    # print("Average precision for all classes:", results.box.all_ap)
+    # print("Mean average precision at IoU=0.50:", results.box.map50)
+    # print("Map @ IoU 50 through 95:", results.box.map)
+    print("Map @ IoU 50:95:", results.box.map50_95)
     print("Mean recall:", results.box.mr)
 
 
