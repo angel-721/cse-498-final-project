@@ -33,9 +33,10 @@ if __name__ == '__main__':
 
     dataset = setup_dataset_path()
 
-    working_dir = os.path.dirname(os.path.abspath(__file__))
+    # FOR DEBUGGING
+    # working_dir = os.path.dirname(os.path.abspath(__file__))
+    # print(f"Working directory: {working_dir}")
 
-    print(f"Working directory: {working_dir}")
     print(f"Dataset path: {dataset}")
 
     # Load a COCO-pretrained YOLOv11n model

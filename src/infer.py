@@ -6,7 +6,7 @@ import math
 classes = ['10c', '10d', '10h', '10s', '2c', '2d', '2h', '2s', '3c', '3d', '3h', '3s', '4c', '4d', '4h', '4s', '5c', '5d', '5h', '5s', '6c', '6d', '6h', '6s', '7c', '7d', '7h', '7s', '8c', '8d', '8h', '8s', '9c', '9d', '9h', '9s', 'Ac', 'Ad', 'Ah', 'As', 'Jc', 'Jd', 'Jh', 'Js', 'Kc', 'Kd', 'Kh', 'Ks', 'Qc', 'Qd', 'Qh', 'Qs']
 
 total_cards = 0
-MIN_DISTANCE = 300
+MIN_DISTANCE = 100
 hand_count = 0
 
 
@@ -68,7 +68,7 @@ def find_nearest_card(card, card_boxes, class_ids, card_id):
 
     return nearest_card, nearest_index
 
-def generate_hands(boxes, class_ids):
+def generate_hands(boxes, class_ids, annotated_frame):
     global hands
     global total_cards
     global used_cards
@@ -109,10 +109,39 @@ def generate_hands(boxes, class_ids):
             used_cards.add(card_id)
             used_cards.add(nearest_card_id)
 
+            # draw hand rectangle
+            # x1, y1, x2, y2 = nearest_card
+            x1 = min(box[0], nearest_card[0])
+            y1 = min(box[1], nearest_card[1])
+            x2 = max(box[2], nearest_card[2])
+            y2 = max(box[3], nearest_card[3])
+
+
+            # logic to determine the color of the rectangle
+            # color is BGR
+            hint = ""
+            if hands[hand_key] == 21:
+                color = (0, 255, 0) # Green for blackjack
+                hint = "Blackjack!"
+            elif hands[hand_key] > 21:
+                color = (0, 0, 0) # Black for bust
+                hint = "Bust!"
+            elif hands[hand_key] <16 :
+                color = (255, 0, 0) # Blue for hit
+                hint = "Hit!"
+            else:
+                color = (0, 255, 255) # Yellow for stand
+                hint = "Stand!"
+
+            cv2.rectangle(annotated_frame, (int(x1), int(y1)), (int(x2), int(y2)),
+                          color, 5)
+            cv2.putText(annotated_frame, hint + " " + str(hands[hand_key]), (int(x1), int(y1) - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
 
     # Second pass: any cards not in a hand become single-card hands
     for i, box in enumerate(boxes):
-        if classes[class_ids[i]] in used_cards:
+        if not classes[class_ids[i]] in used_cards:
             card_id = classes[class_ids[i]]
             hand_key = frozenset([card_id])
             hands[hand_key] = card_id_to_value(card_id)
@@ -120,24 +149,28 @@ def generate_hands(boxes, class_ids):
             used_cards.add(card_id)
             print(f"Created single card hand with {card_id}")
 
+            # draw hand rectangle, blue for hit
+            x1, y1, x2, y2 = box
+
+            cv2.rectangle(annotated_frame, (int(x1), int(y1)), (int(x2),
+                          int(y2)), (255, 0, 0), 5)
+            cv2.putText(annotated_frame, "Hit!" + " " + str(hands[hand_key]), (int(x1), int(y1) - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+
     # Calculate total cards and hands
     total_cards = sum(len(hand) for hand in hands.keys())
     hand_count = len(hands)
+
 
 def draw_card_data(annotated_frame):
     cv2.putText(annotated_frame, f'Total Cards: {total_cards}', (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-    cv2.putText(annotated_frame, f'Total Hands: {hand_count}', (10, 50),
+    cv2.putText(annotated_frame, f'Total Hands: {hand_count}',
+                (10, 70),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-    # draw hands
-    for hand_key, hand_value in hands.items():
-        # Convert the frozenset back to a list for display
-        hand_list = list(hand_key)
-        hand_str = ', '.join(hand_list)
-        cv2.putText(annotated_frame, f'Hand: {hand_str} Value: {hand_value}', (10, 70 + 20 * list(hands.keys()).index(hand_key)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
 def webcam_main():
     global total_cards
@@ -148,12 +181,15 @@ def webcam_main():
         _, frame = cam.read()
 
         # # Resize the frame to the input size of the model
-        # resized_frame = cv2.resize(frame, (640, 640))
-        results = model.track(source=frame, conf=0.5, iou=0.5)
+        resized_frame = cv2.resize(frame, (640, 640))
+        # results = model.track(source=frame, conf=0.5, iou=0.5)
+        results = model.track(source=resized_frame, conf=0.5, iou=0.5)
+
         annotated_frame = results[0].plot()
 
         generate_hands(results[0].boxes.xyxy.cpu().numpy(),
-                       results[0].boxes.cls.cpu().numpy().astype(int))
+                       results[0].boxes.cls.cpu().numpy().astype(int),
+                       annotated_frame)
         print("hands: ", hands)
 
         draw_card_data(annotated_frame)
@@ -180,7 +216,8 @@ def picture_main(image_path):
 
     annotated_image = results[0].plot()
     generate_hands(results[0].boxes.xyxy.cpu().numpy(),
-                   results[0].boxes.cls.cpu().numpy().astype(int))
+                   results[0].boxes.cls.cpu().numpy().astype(int),
+                   annotated_image)
 
     draw_card_data(annotated_image)
 
@@ -189,8 +226,41 @@ def picture_main(image_path):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def video_main(video_path):
+    global total_cards
+
+    # Read the video
+    video = cv2.VideoCapture(video_path)
+
+    while True:
+        ret, frame = video.read()
+        if not ret:
+            break
+
+        # Resize the frame to the input size of the model
+        resized_frame = cv2.resize(frame, (640, 640))
+
+        results = model.track(source=resized_frame, conf=0.5, iou=0.5)
+
+        annotated_frame = results[0].plot()
+
+        generate_hands(results[0].boxes.xyxy.cpu().numpy(),
+                       results[0].boxes.cls.cpu().numpy().astype(int),
+                       annotated_frame)
+
+        draw_card_data(annotated_frame)
+
+        cv2.imshow('Video', annotated_frame)
+
+        # Press 'q' to exit the loop
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    video.release()
+    cv2.destroyAllWindows()
+
 
 
 if __name__ == "__main__":
-    # webcam_main()
-    picture_main("./test2.jpg")
+    webcam_main()
+    # picture_main("./test2.jpg")

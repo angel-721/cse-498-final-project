@@ -183,3 +183,4 @@ cython_debug/
 ./datasets/*
 ./models/*
 *.cache
+*.mp4
