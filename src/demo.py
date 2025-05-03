@@ -1,12 +1,8 @@
-from ultralytics import YOLO
-from train import setup_dataset_path
-import matplotlib.pyplot as plt
-
-
-from infer import video_main
-
-
+from infer import picture_main,video_main, webcam_main
 
 # I have to do this since this calls a GPU process
 if __name__ == '__main__':
-    video_main("./test.mp4")
+    picture_main("./demo_2.jpg")
+    picture_main("./demo_3.jpg")
+    # video_main("./demo.mp4")
+    webcam_main()
