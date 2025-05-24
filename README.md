@@ -1,6 +1,12 @@
-# cse-498-final-project
+#  yolo-blackjack-hand-detection
 
-GitHub repo link: https://github.com/angel-721/cse-498-final-project
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/758a64fd-172a-4a1a-8dd6-0ca2d84ffc7d" alt="image" />
+</p>
+
+A little project using YOLOv11 to detect BlackJack cards and using a euclidean distance nearest-neighbor method to group detected cards into BlackJack hands.
+
+Gives feedback based off the count of the hand. Currently, it can only detect hands of 2 cards.
 
 TIP: Run scripts from home dir, not src
 e.g python src/train.py
